@@ -7,3 +7,6 @@
 [submodule "ThirdParty/libpng"]
 	path = ThirdParty/libpng
 	url = https://github.com/DiligentGraphics/libpng
+[submodule "ThirdParty/ImGui"]
+	path = ThirdParty/ImGui
+	url = https://github.com/ocornut/imgui.git
