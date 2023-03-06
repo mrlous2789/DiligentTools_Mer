@@ -29,6 +29,7 @@
 
 #include <memory>
 #include "ImGuiImplDiligent.hpp"
+#include <backends/imgui_impl_glfw.h>
 
 namespace Diligent
 {
@@ -36,7 +37,7 @@ namespace Diligent
 class ImGuiImplWin32 final : public ImGuiImplDiligent
 {
 public:
-    ImGuiImplWin32(HWND           hWnd,
+    ImGuiImplWin32(GLFWwindow*    hWnd,
                    IRenderDevice* pDevice,
                    TEXTURE_FORMAT BackBufferFmt,
                    TEXTURE_FORMAT DepthBufferFmt,

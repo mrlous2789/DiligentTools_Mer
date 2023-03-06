@@ -32,7 +32,6 @@
 #include "GraphicsTypes.h"
 #include "imgui.h"
 #include "ImGuiImplWin32.hpp"
-#include "backends/imgui_impl_win32.h"
 #include "DebugUtilities.hpp"
 
 IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -40,7 +39,7 @@ IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARA
 namespace Diligent
 {
 
-ImGuiImplWin32::ImGuiImplWin32(HWND           hWnd,
+ImGuiImplWin32::ImGuiImplWin32(GLFWwindow*    hWnd,
                                IRenderDevice* pDevice,
                                TEXTURE_FORMAT BackBufferFmt,
                                TEXTURE_FORMAT DepthBufferFmt,
@@ -48,19 +47,19 @@ ImGuiImplWin32::ImGuiImplWin32(HWND           hWnd,
                                Uint32         InitialIndexBufferSize) :
     ImGuiImplDiligent{pDevice, BackBufferFmt, DepthBufferFmt, InitialVertexBufferSize, InitialIndexBufferSize}
 {
-    ImGui_ImplWin32_Init(hWnd);
+    ImGui_ImplGlfw_InitForOther(hWnd, true);
 }
 
 ImGuiImplWin32::~ImGuiImplWin32()
 {
-    ImGui_ImplWin32_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
 }
 
 void ImGuiImplWin32::NewFrame(Uint32 RenderSurfaceWidth, Uint32 RenderSurfaceHeight, SURFACE_TRANSFORM SurfacePreTransform)
 {
     VERIFY(SurfacePreTransform == SURFACE_TRANSFORM_IDENTITY, "Unexpected surface pre-transform");
 
-    ImGui_ImplWin32_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
     ImGuiImplDiligent::NewFrame(RenderSurfaceWidth, RenderSurfaceHeight, SurfacePreTransform);
 
 #ifdef DILIGENT_DEBUG
