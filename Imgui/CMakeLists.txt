@@ -51,7 +51,6 @@ add_library(Diligent-Imgui STATIC
     ${SOURCE}
     ${INCLUDE}
     ${INTERFACE}
-    ${IMGUIZMO_QUAT_SOURCE}
 )
 
 if(TARGET imgui)
@@ -81,6 +80,8 @@ else()
     if(PLATFORM_WIN32)
         list(APPEND DEAR_IMGUI_SOURCE ${DILIGENT_DEAR_IMGUI_PATH}/backends/imgui_impl_win32.cpp)
         list(APPEND DEAR_IMGUI_INCLUDE ${DILIGENT_DEAR_IMGUI_PATH}/backends/imgui_impl_win32.h)
+        list(APPEND DEAR_IMGUI_SOURCE ${DILIGENT_DEAR_IMGUI_PATH}/backends/imgui_impl_glfw.cpp)
+        list(APPEND DEAR_IMGUI_INCLUDE ${DILIGENT_DEAR_IMGUI_PATH}/backends/imgui_impl_glfw.h)
     elseif(PLATFORM_MACOS)
         set(DEAR_IMGUI_V185_SOURCE
             ../ThirdParty/imgui_v1.85/imgui_impl_osx_v1.85.mm
@@ -94,6 +95,12 @@ else()
         ${DEAR_IMGUI_SOURCE}
         ${DEAR_IMGUI_INCLUDE}
         ${DEAR_IMGUI_INTERFACE}
+    )
+
+    target_link_libraries(
+            Diligent-Imgui
+            PRIVATE
+            glfw
     )
 
     source_group(TREE ${DILIGENT_DEAR_IMGUI_PATH} PREFIX "dear_imgui" FILES ${DEAR_IMGUI_SOURCE} ${DEAR_IMGUI_INCLUDE} ${DEAR_IMGUI_INTERFACE})
