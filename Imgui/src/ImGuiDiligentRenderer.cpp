@@ -140,7 +140,7 @@ void main()
 
 // clang-format off
 
-// glslavngValidator.exe -V -e main --vn VertexShader_SPIRV ImGUI.ert
+// glslangValidator.exe -V -e main --vn VertexShader_SPIRV ImGUI.ert
 
 static constexpr uint32_t VertexShader_SPIRV[] =
 {
