@@ -1,27 +1,27 @@
 /*
  *  Copyright 2019-2022 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  In no event and under no legal theory, whether in tort (including negligence), 
- *  contract, or otherwise, unless required by applicable law (such as deliberate 
+ *  In no event and under no legal theory, whether in tort (including negligence),
+ *  contract, or otherwise, unless required by applicable law (such as deliberate
  *  and grossly negligent acts) or agreed to in writing, shall any Contributor be
- *  liable for any damages, including any direct, indirect, special, incidental, 
- *  or consequential damages of any character arising as a result of this License or 
- *  out of the use or inability to use the software (including but not limited to damages 
- *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and 
- *  all other commercial damages or losses), even if such Contributor has been advised 
+ *  liable for any damages, including any direct, indirect, special, incidental,
+ *  or consequential damages of any character arising as a result of this License or
+ *  out of the use or inability to use the software (including but not limited to damages
+ *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and
+ *  all other commercial damages or losses), even if such Contributor has been advised
  *  of the possibility of such damages.
  */
 
@@ -34,6 +34,7 @@
 #include "TextureLoaderImpl.hpp"
 #include "GraphicsAccessories.hpp"
 #include "GraphicsUtilities.h"
+#include "TextureUtilities.h"
 #include "PNGCodec.h"
 #include "JPEGCodec.h"
 #include "ColorConversion.h"
@@ -72,39 +73,6 @@ extern "C"
 
 namespace Diligent
 {
-
-template <typename ChannelType>
-void ModifyComponentCount(const void* pSrcData,
-                          Uint32      SrcStride,
-                          Uint32      SrcCompCount,
-                          void*       pDstData,
-                          Uint32      DstStride,
-                          Uint32      Width,
-                          Uint32      Height,
-                          Uint32      DstCompCount)
-{
-    auto CompToCopy = std::min(SrcCompCount, DstCompCount);
-    for (size_t row = 0; row < size_t{Height}; ++row)
-    {
-        for (size_t col = 0; col < size_t{Width}; ++col)
-        {
-            // clang-format off
-            auto*       pDst = reinterpret_cast<      ChannelType*>((reinterpret_cast<      Uint8*>(pDstData) + size_t{DstStride} * row)) + col * DstCompCount;
-            const auto* pSrc = reinterpret_cast<const ChannelType*>((reinterpret_cast<const Uint8*>(pSrcData) + size_t{SrcStride} * row)) + col * SrcCompCount;
-            // clang-format on
-
-            for (size_t c = 0; c < CompToCopy; ++c)
-                pDst[c] = pSrc[c];
-
-            for (size_t c = CompToCopy; c < DstCompCount; ++c)
-            {
-                pDst[c] = c < 3 ?
-                    (SrcCompCount == 1 ? pSrc[0] : 0) :      // For single-channel source textures, propagate r to other channels
-                    std::numeric_limits<ChannelType>::max(); // Use 1.0 as default value for alpha
-            }
-        }
-    }
-}
 
 DECODE_PNG_RESULT DecodePng(IDataBlob* pSrcPngBits,
                             IDataBlob* pDstPixels,
@@ -279,18 +247,18 @@ void TextureLoaderImpl::LoadFromImage(const TextureLoadInfo& TexLoadInfo)
         m_Mips[0].resize(size_t{DstStride} * size_t{ImgDesc.Height});
         m_SubResources[0].pData  = m_Mips[0].data();
         m_SubResources[0].Stride = DstStride;
-        if (ChannelDepth == 8)
-        {
-            ModifyComponentCount<Uint8>(m_pImage->GetData()->GetDataPtr(), ImgDesc.RowStride, ImgDesc.NumComponents,
-                                        m_Mips[0].data(), DstStride,
-                                        ImgDesc.Width, ImgDesc.Height, NumComponents);
-        }
-        else if (ChannelDepth == 16)
-        {
-            ModifyComponentCount<Uint16>(m_pImage->GetData()->GetDataPtr(), ImgDesc.RowStride, ImgDesc.NumComponents,
-                                         m_Mips[0].data(), DstStride,
-                                         ImgDesc.Width, ImgDesc.Height, NumComponents);
-        }
+
+        CopyPixelsAttribs CopyAttribs;
+        CopyAttribs.Width         = ImgDesc.Width;
+        CopyAttribs.Height        = ImgDesc.Height;
+        CopyAttribs.ComponentSize = ChannelDepth / 8;
+        CopyAttribs.pSrcPixels    = m_pImage->GetData()->GetDataPtr();
+        CopyAttribs.SrcStride     = ImgDesc.RowStride;
+        CopyAttribs.SrcCompCount  = ImgDesc.NumComponents;
+        CopyAttribs.pDstPixels    = m_Mips[0].data();
+        CopyAttribs.DstStride     = DstStride;
+        CopyAttribs.DstCompCount  = NumComponents;
+        CopyPixels(CopyAttribs);
     }
     else
     {

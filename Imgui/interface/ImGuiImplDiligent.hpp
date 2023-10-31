@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019-2022 Diligent Graphics LLC
+ *  Copyright 2019-2023 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,22 +35,58 @@ namespace Diligent
 
 struct IRenderDevice;
 struct IDeviceContext;
+struct SwapChainDesc;
 enum TEXTURE_FORMAT : Uint16;
 enum SURFACE_TRANSFORM : Uint32;
 
 class ImGuiDiligentRenderer;
 
-class ImGuiImplDiligent
+/// Conversion mode to apply to imgui colors.
+///
+/// \remarks    Imgui colors are defined in sRGB space.
+///             Depending on the use case, they may need
+///             to be converted to linear space.
+enum IMGUI_COLOR_CONVERSION_MODE : Uint8
 {
-public:
+    /// Select the color conversion mode automatically:
+    /// * Use SRGB_TO_LINEAR mode for sRGB framebuffers
+    /// * Use NONE mode for non-sRGB framebuffers
+    IMGUI_COLOR_CONVERSION_MODE_AUTO = 0,
+
+    /// Always perform srgb-to-linear conversion.
+    IMGUI_COLOR_CONVERSION_MODE_SRGB_TO_LINEAR,
+
+    /// Do not perform any color conversion.
+    IMGUI_COLOR_CONVERSION_MODE_NONE
+};
+
+struct ImGuiDiligentCreateInfo
+{
     static constexpr Uint32 DefaultInitialVBSize = 1024;
     static constexpr Uint32 DefaultInitialIBSize = 2048;
 
-    ImGuiImplDiligent(IRenderDevice* pDevice,
-                      TEXTURE_FORMAT BackBufferFmt,
-                      TEXTURE_FORMAT DepthBufferFmt,
-                      Uint32         InitialVertexBufferSize = DefaultInitialVBSize,
-                      Uint32         InitialIndexBufferSize  = DefaultInitialIBSize);
+    IRenderDevice* pDevice = nullptr;
+
+    TEXTURE_FORMAT BackBufferFmt  = {};
+    TEXTURE_FORMAT DepthBufferFmt = {};
+
+    IMGUI_COLOR_CONVERSION_MODE ColorConversion = IMGUI_COLOR_CONVERSION_MODE_AUTO;
+
+    Uint32 InitialVertexBufferSize = DefaultInitialVBSize;
+    Uint32 InitialIndexBufferSize  = DefaultInitialIBSize;
+
+    ImGuiDiligentCreateInfo() noexcept {}
+    ImGuiDiligentCreateInfo(IRenderDevice* _pDevice,
+                            TEXTURE_FORMAT _BackBufferFmt,
+                            TEXTURE_FORMAT _DepthBufferFmt) noexcept;
+    ImGuiDiligentCreateInfo(IRenderDevice*       _pDevice,
+                            const SwapChainDesc& _SCDesc) noexcept;
+};
+
+class ImGuiImplDiligent
+{
+public:
+    ImGuiImplDiligent(const ImGuiDiligentCreateInfo& CI);
     virtual ~ImGuiImplDiligent();
 
     // clang-format off

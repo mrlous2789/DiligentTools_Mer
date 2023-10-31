@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019-2022 Diligent Graphics LLC
+ *  Copyright 2019-2023 Diligent Graphics LLC
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -407,23 +407,7 @@ Bool RenderStateNotationParserImpl::ParseStringInternal(const Char*             
                     }
                     else
                     {
-                        auto CompareMacros = [](const ShaderMacro* pLHS, const ShaderMacro* pRHS) //
-                        {
-                            if ((pLHS == nullptr) != (pRHS == nullptr))
-                                return false;
-                            if (pLHS == pRHS)
-                                return true;
-
-                            VERIFY_EXPR(pLHS != nullptr && pRHS != nullptr);
-                            while (!(*pLHS == ShaderMacro{} || *pRHS == ShaderMacro{}) && *pLHS == *pRHS)
-                            {
-                                ++pLHS;
-                                ++pRHS;
-                            }
-                            return *pLHS == ShaderMacro{} && *pRHS == ShaderMacro{};
-                        };
-
-                        auto CompareShaderCI = [&CompareMacros](const ShaderCreateInfo& LHS, const ShaderCreateInfo& RHS) //
+                        auto CompareShaderCI = [](const ShaderCreateInfo& LHS, const ShaderCreateInfo& RHS) //
                         {
                             return LHS.Desc == RHS.Desc &&
                                 LHS.SourceLanguage == RHS.SourceLanguage &&
@@ -434,7 +418,7 @@ Bool RenderStateNotationParserImpl::ParseStringInternal(const Char*             
                                 LHS.ShaderCompiler == RHS.ShaderCompiler &&
                                 SafeStrEqual(LHS.EntryPoint, RHS.EntryPoint) &&
                                 SafeStrEqual(LHS.FilePath, RHS.FilePath) &&
-                                CompareMacros(LHS.Macros, RHS.Macros);
+                                LHS.Macros == RHS.Macros;
                         };
 
                         if (!CompareShaderCI(m_Shaders[Iter.first->second], ResourceDesc))
@@ -713,12 +697,12 @@ bool RenderStateNotationParserImpl::Reload()
     {
         if (!Reload.Path.empty())
         {
-            if (!ParseFileInternal(Reload.Path.c_str(), Reload.pFactory.RawPtr<IShaderSourceInputStreamFactory>()))
+            if (!ParseFileInternal(Reload.Path.c_str(), Reload.pFactory))
                 res = false;
         }
         else if (!Reload.Source.empty())
         {
-            if (!ParseStringInternal(Reload.Source.c_str(), static_cast<Uint32>(Reload.Source.length()), Reload.pFactory.RawPtr<IShaderSourceInputStreamFactory>()))
+            if (!ParseStringInternal(Reload.Source.c_str(), static_cast<Uint32>(Reload.Source.length()), Reload.pFactory))
                 res = false;
         }
         else

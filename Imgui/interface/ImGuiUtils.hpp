@@ -1,27 +1,27 @@
 /*
- *  Copyright 2019-2022 Diligent Graphics LLC
+ *  Copyright 2019-2023 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  In no event and under no legal theory, whether in tort (including negligence), 
- *  contract, or otherwise, unless required by applicable law (such as deliberate 
+ *  In no event and under no legal theory, whether in tort (including negligence),
+ *  contract, or otherwise, unless required by applicable law (such as deliberate
  *  and grossly negligent acts) or agreed to in writing, shall any Contributor be
- *  liable for any damages, including any direct, indirect, special, incidental, 
- *  or consequential damages of any character arising as a result of this License or 
- *  out of the use or inability to use the software (including but not limited to damages 
- *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and 
- *  all other commercial damages or losses), even if such Contributor has been advised 
+ *  liable for any damages, including any direct, indirect, special, incidental,
+ *  or consequential damages of any character arising as a result of this License or
+ *  out of the use or inability to use the software (including but not limited to damages
+ *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and
+ *  all other commercial damages or losses), even if such Contributor has been advised
  *  of the possibility of such damages.
  */
 
@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <vector>
 
 #include "../../../DiligentCore/Platforms/Basic/interface/DebugUtilities.hpp"
 
@@ -42,6 +43,9 @@ typedef int ImGuiSliderFlags;
 bool Checkbox(const char* label, bool* v);
 bool SliderInt(const char* label, int* v, int v_min, int v_max, const char* format, ImGuiSliderFlags flags);
 bool Combo(const char* label, int* current_item, const char* const items[], int items_count, int height_in_items);
+void PushID(const char* str_id);
+void PushID(const void* ptr_id);
+void PushID(int int_id);
 void PopID();
 
 class ScopedDisabler
@@ -131,6 +135,57 @@ public:
     {
         PopID();
     }
+};
+
+
+class Plot
+{
+public:
+    Plot(const char* Name, size_t Size, float Height) :
+        m_Name{Name != nullptr ? Name : ""},
+        m_Height{Height},
+        m_Values(Size)
+    {
+    }
+
+    void AddValue(float Value)
+    {
+        m_Values[m_FrameNum % m_Values.size()] = Value;
+        ++m_FrameNum;
+    }
+
+    void Reset()
+    {
+        for (auto& Val : m_Values)
+            Val = 0;
+        m_FrameNum = 0;
+    }
+
+    void Render();
+
+private:
+    const std::string m_Name;
+    const float       m_Height;
+
+    std::vector<float> m_Values;
+    size_t             m_FrameNum = 0;
+};
+
+void ApplyStyleColorsGamma(float Gamma, bool ApplyToAlpha = false);
+void StyleColorsDiligent(float Gamma = 0.5f);
+
+class LogWindow
+{
+public:
+    ~LogWindow();
+    LogWindow();
+
+    void AddLog(const char* fmt, ...);
+    void Draw(const char* title);
+    void Clear();
+
+private:
+    std::unique_ptr<class LogWindowImpl> m_Impl;
 };
 
 } // namespace ImGui
